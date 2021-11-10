@@ -21,6 +21,13 @@ connection.once('open', () => {
     console.log("MongoDB database connection established successfully!");
 });
 
+// next 5 lines are for routing purposes (ideally would import at top of script)
+const exercisesRouter = require('./routes/exercises.js');
+const usersRouter = require('./routes/users.js');
+
+app.use('/exercises', exercisesRouter);
+app.use('/users', usersRouter);
+
 // Express server listens for new HTTP requests...
 app.listen(port, () => {
     console.log(`Server is running on port ${port}...`);
