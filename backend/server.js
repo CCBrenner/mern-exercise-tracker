@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// Configures to have environment variables in the .env file
+// Configures to have environment variables in the .env file on the production server
 require('dotenv').config();
 
 // Create Express server and port variable

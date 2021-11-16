@@ -1,11 +1,159 @@
 import React, { Component } from 'react';
+import { useHistory } from 'react-router-dom';
+import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.min.css';
 
 export default class EditExercise extends Component {
+    constructor(props) {
+        super(props)  // required for every subclass that inherits from a parent class (which is every subclass)
+
+        this.onChangeUsername = this.onChangeUsername.bind(this);
+        this.onChangeDescription = this.onChangeDescription.bind(this);
+        this.onChangeDuration = this.onChangeDuration.bind(this);
+        this.onChangeDate = this.onChangeDate.bind(this);
+        this.onSubmit = this.onSubmit.bind(this);
+
+        this.state = {  // property assign. is done within inherited 'state' data structure
+            username: '',
+            description: '',
+            duration: 0,
+            date: new Date(),
+            users: []  // not part of our model but we will be using this clint-side
+        }
+    }
+
+    componentDidMount() {  // React lifecycle method 
+        axios.get(`http://localhost:5000/exercises/${this.props.match.params.id}`)  // this was causing problems using updated react modules
+            .then(response => {
+                this.setState({
+                    username: response.data.username,
+                    description: response.data.description,
+                    duration: response.data.duration,
+                    date: new Date(response.data.date)
+                })
+            })
+            .catch(err => console.log(err));
+    
+        // getting all users and assigning only usernames of each to the users prop array
+        axios.get('http://localhost:5000/users/')
+          .then(response => {
+            if (response.data.length > 0) {
+              this.setState({
+                users: response.data.map(user => user.username),
+              })
+            }
+          })
+    }
+
+    
+    
+    onChangeUsername(e) {
+        this.setState({  // this.SetState is used to change props of a React component; do not do direct assignment
+            username: e.target.value
+
+        })
+    }
+
+    onChangeDescription(e) {
+        this.setState({
+            description: e.target.value
+        })
+    }
+
+    onChangeDuration(e) {
+        this.setState({
+            duration: e.target.value
+        })
+    }
+
+    onChangeDate(date) {
+        this.setState({
+            date: date  // we will use a library to pass in a date object from calender GUI (different from above)
+        })
+    }
+
+    onSubmit(e) {
+        e.preventDefault();  // prevents the page from reloading upon form submission...
+
+        // ...performs the following instead...
+        const exercise = {
+            username: this.state.username,
+            description: this.state.description,
+            duration: this.state.duration,
+            date: this.state.date
+        }
+
+        console.log(exercise);
+
+        axios.post('http://localhost:5000/exercises/update/'+this.props.match.params.id, exercise)
+          .then(res => console.log(res.data))
+          .catch(err => console.log(err))
+
+        // window.location = '/';  // takes user back to home page onSubmit (How to stop from reloading page when redirecting?)
+    }
+    
     render() {
         return (
-            <div>
-                <p>You are on the Edit Exercise component!</p>
-            </div>
+        <div>
+            <h3>Edit Exercise Log</h3>
+            <form onSubmit={this.onSubmit}>
+
+              <div className="form-group"> 
+                <label>Username: </label>
+                <select ref="userInput"
+                    required
+                    className="form-control"
+                    value={this.state.username}
+                    onChange={this.onChangeUsername}>
+                    {/* 'for every user, offer a dropdown list item for selecting them' */}
+                    {
+                      this.state.users.map(user => {
+                        return <option 
+                          key={user}
+                          value={user}>{user}
+                          </option>;
+                      })
+                    }
+                </select>
+              </div>
+
+              <div className="form-group"> 
+                <label>Description: </label>
+                <input  type="text"
+                    required
+                    className="form-control"
+                    value={this.state.description}
+                    onChange={this.onChangeDescription}
+                    />
+              </div>
+
+              <div className="form-group">
+                <label>Duration (in minutes): </label>
+                <input 
+                    type="text" 
+                    className="form-control"
+                    value={this.state.duration}
+                    onChange={this.onChangeDuration}
+                    />
+              </div>
+
+              <div className="form-group">
+                <label>Date: </label>
+                <div>
+                  <DatePicker
+                    selected={this.state.date}
+                    onChange={this.onChangeDate}
+                  />
+                </div>
+              </div>
+              <br />
+      
+              <div className="form-group">
+                <input type="submit" value="Update Exercise Log" className="btn btn-primary" />
+              </div>
+            </form>
+          </div>
         )
     }
 }
